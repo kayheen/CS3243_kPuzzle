@@ -107,8 +107,12 @@ class Puzzle(object):
         
 
     def isSolvable(self):
-        numInvert = self.getNumOfInversions();
-        return (numInvert % 2 == 0)
+        numInvert = self.getNumOfInversions()
+        if n % 2 == 1:
+            return (numInvert % 2 == 0)
+        else:
+            (blankX, blankY) = self.getBlank(init_state)
+            return (blankX % 2)!=(numInvert % 2)
     
     def getNumOfInversions(self):
         # create the string of interest for comparison 
