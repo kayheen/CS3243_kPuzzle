@@ -106,15 +106,16 @@ class Puzzle(object):
 
         goal_tuple = tuple(item for row in self.goal_state for item in row)
         init_tuple = tuple(item for row in self.init_state for item in row)
-        frontier.append((self.heuristic(init_state), init_state))
+        frontier.append((self.heuristic(init_state), 0, init_state))
 
         self.prev[init_tuple]=-1
         heapq.heapify(frontier)
 
         while len(frontier) > 0:
             node = heapq.heappop(frontier)
+            g=node[1]
 
-            children = self.generateChildren(node[1])
+            children = self.generateChildren(node[2])
             for child in children:
                 stateTuple=tuple(item for row in child[1] for item in row)
                 if self.prev.get(stateTuple) is not None:
@@ -123,7 +124,7 @@ class Puzzle(object):
                 self.prev[stateTuple]=child[0]
                 if child[1] == self.goal_state:
                     return self.getActions()
-                heapq.heappush(frontier, (self.heuristic(child[1]),child[1]))
+                heapq.heappush(frontier, (self.heuristic(child[1])+g+1,g+1,child[1]))
 
         return ["UNSOLVABLE"] # sample output
 
