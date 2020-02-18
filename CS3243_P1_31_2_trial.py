@@ -2,30 +2,34 @@ import os
 import sys
 import heapq # priority queue
 import copy
+import time
 
 class Puzzle(object):
     def __init__(self, init_state, goal_state):
         # you may add more attributes if you think is useful
         self.init_state = init_state
         self.goal_state = goal_state
+        self.goal_tuple = tuple(item for row in self.goal_state for item in row)
         self.direction = [(1, 0), (-1, 0), (0, -1), (0, 1)]
-        self.actionName = ["UP", "DOWN", "RIGHT", "LEFT"]
+        self.actionNames = ["UP", "DOWN", "RIGHT", "LEFT"]
         self.prev = dict()
-
+        self.cost = dict()
         self.n = len(init_state)
-        self.initStateString = list()
 
     def getBlank(self, state):
-        for i in range(self.n):
-            for j in range(self.n):
-                if state[i][j] == 0:
-                    return (i, j)
+        if type(state) is tuple:
+            return state.index(0)
+        else:
+            for i in range(self.n):
+                for j in range(self.n):
+                    if state[i][j] == 0:
+                        return (i, j)
 
     def isValid(self, i, j):
         return i >= 0 and i < self.n and j >= 0 and j < self.n
 
     def numToPair(self, num):
-        return (num/n, num%n)
+        return (num//n, num%n)
 
     def pairToNum(self, p):
         return p[0]*n+p[1]
@@ -33,10 +37,9 @@ class Puzzle(object):
     # num of incorrect number
     def heuristic(self, state):
         num = 0
-        for i in range(self.n):
-            for j in range(self.n):
-                if state[i][j] != self.goal_state[i][j]:
-                    num += 1
+        for i in range(len(state)):
+            if state[i]!=self.goal_tuple[i] and state[i]!=0:
+                num+=1
         return num
 
     def getActions(self):
@@ -45,7 +48,7 @@ class Puzzle(object):
         actionList=[]
         while self.prev[state] != -1:
             action = self.prev[state]
-            actionList.append(self.actionName[action])
+            actionList.append(self.actionNames[action])
             (prevX, prevY) = (blankX - self.direction[action][0], blankY - self.direction[action][1])
             prevState = list(state)
             prevState[self.pairToNum((prevX, prevY))]=0
@@ -64,7 +67,7 @@ class Puzzle(object):
         for action in actionList:
             (x,y) = self.getBlank(state)
             if (action == "UP"):
-                # move the bottom cell upwards =
+                # move the bottom cell upwards
                 state[x][y]= state[x+1][y]
                 state[x+1][y]=0
             elif (action == "DOWN"):
@@ -83,16 +86,17 @@ class Puzzle(object):
 
     def generateChildren(self, state):
         children = []
-        blank = self.getBlank(state)
+        blank = self.numToPair(self.getBlank(state))
         for i in range(4):
             x = blank[0] + self.direction[i][0]
             y = blank[1] + self.direction[i][1]
             if not self.isValid(x, y):
                 continue
-            new_state = copy.deepcopy(state)
-            new_state[x][y], new_state[blank[0]][blank[1]] = new_state[blank[0]][blank[1]], new_state[x][y]
-            
-            children.append((i, new_state))
+            new_state = list(state)
+            new_state[self.pairToNum((x,y))]=0
+            new_state[self.pairToNum((blank[0],blank[1]))]=state[self.pairToNum((x, y))]
+
+            children.append((i, tuple(new_state)))
         return children
 
 
@@ -100,31 +104,42 @@ class Puzzle(object):
         #TODO
         # implement your search algorithm here
 
+        start_time = time.time()
         if not self.isSolvable():
             return ["UNSOLVABLE"]
+        
         frontier = []  # priority queue
 
-        goal_tuple = tuple(item for row in self.goal_state for item in row)
         init_tuple = tuple(item for row in self.init_state for item in row)
-        frontier.append((self.heuristic(init_state), 0, init_state))
+        frontier.append((self.heuristic(init_state), 0, init_tuple))
 
         self.prev[init_tuple]=-1
+        self.cost[init_tuple]=0
         heapq.heapify(frontier)
+        explored = set()
 
         while len(frontier) > 0:
             node = heapq.heappop(frontier)
-            g=node[1]
-
-            children = self.generateChildren(node[2])
-            for child in children:
-                stateTuple=tuple(item for row in child[1] for item in row)
-                if self.prev.get(stateTuple) is not None:
+            
+            cur_cost = node[1]
+            cur_state = node[2]
+            explored.add(cur_state)
+            if cur_cost>self.cost[cur_state]:
+                continue
+            if cur_state == self.goal_tuple:
+                answer = self.getActions()
+                print(time.time()-start_time)
+                return answer
+            
+            children = self.generateChildren(cur_state)
+            for (action,child_state) in children:
+                if self.cost.get(child_state) is not None and self.cost[child_state] <= cur_cost + 1:
                     continue
-
-                self.prev[stateTuple]=child[0]
-                if child[1] == self.goal_state:
-                    return self.getActions()
-                heapq.heappush(frontier, (self.heuristic(child[1])+g+1,g+1,child[1]))
+                if child_state in explored:
+                    continue
+                self.cost[child_state] = cur_cost + 1
+                self.prev[child_state] = action
+                heapq.heappush(frontier, (self.heuristic(child_state)+cur_cost+1,cur_cost+1,child_state))
 
         return ["UNSOLVABLE"] # sample output
 
@@ -139,31 +154,13 @@ class Puzzle(object):
             return (blankX % 2)!=(numInvert % 2)
     
     def getNumOfInversions(self):
-        # create the string of interest for comparison 
-        for row in range(len(init_state)):
-            for col in range(len(init_state)):
-                self.initStateString.append(self.init_state[row][col])
-        # start counting the inversions. 
+        init_state_tuple = tuple(col for row in self.init_state for col in row)
         invCount = 0
-        for i in range(len(self.initStateString)):
-            for j in range(i+1, len(self.initStateString)):
-                if (self.initStateString[j] > 0 and self.initStateString[i] > self.initStateString[j]): 
+        for i in range(len(init_state_tuple)):
+            for j in range(i+1, len(init_state_tuple)):
+                if (init_state_tuple[j] > 0 and init_state_tuple[i] > init_state_tuple[j]): 
                     invCount += 1
         return invCount
-
-    def getNumOfInversions(self):
-        # create the string of interest for comparison
-        for row in range(len(init_state)):
-            for col in range(len(init_state)):
-                self.initStateString.append(self.init_state[row][col]);
-        # start counting the inversions.
-        invCount = 0
-        for i in range(len(self.initStateString)):
-            for j in range(i + 1, len(self.initStateString)):
-                if (self.initStateString[j] > 0 and self.initStateString[i] > self.initStateString[j]):
-                    invCount += 1
-        return invCount
-
 
 if __name__ == "__main__":
     # do NOT modify below
@@ -214,10 +211,3 @@ if __name__ == "__main__":
     with open(sys.argv[2], 'a') as f:
         for answer in ans:
             f.write(answer+'\n')
-
-
-
-
-
-
-
