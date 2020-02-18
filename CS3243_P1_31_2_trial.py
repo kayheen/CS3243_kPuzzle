@@ -9,30 +9,18 @@ class Puzzle(object):
         # you may add more attributes if you think is useful
         self.init_state = init_state
         self.goal_state = goal_state
+        self.init_tuple = tuple(item for row in self.init_state for item in row)
         self.goal_tuple = tuple(item for row in self.goal_state for item in row)
-        self.direction = [(1, 0), (-1, 0), (0, -1), (0, 1)]
-        self.actionNames = ["UP", "DOWN", "RIGHT", "LEFT"]
+        self.direction = [(1, 0), (0, -1), (-1, 0), (0, 1)]
+        self.actionNames = ["UP",  "RIGHT", "DOWN", "LEFT"]
+        
         self.prev = dict()
         self.cost = dict()
         self.n = len(init_state)
+        self.weights = [37**i for i in range(self.n*self.n)]
 
-    def getBlank(self, state):
-        if type(state) is tuple:
-            return state.index(0)
-        else:
-            for i in range(self.n):
-                for j in range(self.n):
-                    if state[i][j] == 0:
-                        return (i, j)
-
-    def isValid(self, i, j):
-        return i >= 0 and i < self.n and j >= 0 and j < self.n
-
-    def numToPair(self, num):
-        return (num//n, num%n)
-
-    def pairToNum(self, p):
-        return p[0]*n+p[1]
+    def getBlank(self, state_tuple):
+        return state_tuple.index(0)
 
     # num of incorrect number
     def heuristic(self, state):
@@ -42,24 +30,35 @@ class Puzzle(object):
                 num+=1
         return num
 
+    def hash(self, state):
+        b=1
+        h=0
+        for i in range(self.n*self.n):
+            h+=state[i]*self.weights[i]
+        return h
+
     def getActions(self):
         state = tuple(item for row in self.goal_state for item in row)
-        (blankX, blankY) = self.getBlank(self.goal_state)
+        blank = self.getBlank(self.goal_tuple)
+        blankX=blank//n
+        blankY=blank%n
         actionList=[]
-        while self.prev[state] != -1:
-            action = self.prev[state]
+        hash=self.hash(state)
+        while self.prev[hash] != -1:
+            action = self.prev[hash]
             actionList.append(self.actionNames[action])
             (prevX, prevY) = (blankX - self.direction[action][0], blankY - self.direction[action][1])
             prevState = list(state)
-            prevState[self.pairToNum((prevX, prevY))]=0
-            prevState[self.pairToNum((blankX,blankY))]=state[self.pairToNum((prevX, prevY))]
+            prevState[prevX*self.n+prevY]=0
+            prevState[blankX*self.n+blankY]=state[prevX*self.n+prevY]
             state = tuple(prevState)
             blankX = prevX
             blankY = prevY
+            hash = self.hash(prevState)
 
         actionList.reverse()
-        if not self.checkActions(actionList):
-          print("Wrong")
+        #if not self.checkActions(actionList):
+         # print("Wrong")
         return actionList
     
     def checkActions(self, actionList):
@@ -84,22 +83,6 @@ class Puzzle(object):
                 state[x][y-1]=0
         return state == self.goal_state
 
-    def generateChildren(self, state):
-        children = []
-        blank = self.numToPair(self.getBlank(state))
-        for i in range(4):
-            x = blank[0] + self.direction[i][0]
-            y = blank[1] + self.direction[i][1]
-            if not self.isValid(x, y):
-                continue
-            new_state = list(state)
-            new_state[self.pairToNum((x,y))]=0
-            new_state[self.pairToNum((blank[0],blank[1]))]=state[self.pairToNum((x, y))]
-
-            children.append((i, tuple(new_state)))
-        return children
-
-
     def solve(self):
         #TODO
         # implement your search algorithm here
@@ -110,37 +93,57 @@ class Puzzle(object):
         
         frontier = []  # priority queue
 
-        init_tuple = tuple(item for row in self.init_state for item in row)
-        frontier.append((self.heuristic(init_state), 0, init_tuple))
+        init_hash=self.hash(self.init_tuple)
+        frontier.append((self.heuristic(self.init_state), 0, self.init_tuple, self.getBlank(self.init_tuple), init_hash))
 
-        self.prev[init_tuple]=-1
-        self.cost[init_tuple]=0
+        self.prev[init_hash]=-1
+        self.cost[init_hash]=0
         heapq.heapify(frontier)
-        explored = set()
 
         while len(frontier) > 0:
             node = heapq.heappop(frontier)
             
+            cur_f = node[0]
             cur_cost = node[1]
             cur_state = node[2]
+            blank = node[3]
+            cur_hash = node[4]
+            cur_heuristic = cur_f-cur_cost
+            
             if cur_state == self.goal_tuple:
                 answer = self.getActions()
                 print(time.time()-start_time)
                 return answer
 
-            explored.add(cur_state)
-            if cur_cost>self.cost[cur_state]:
+            if cur_cost>self.cost[cur_hash]:
                 continue
             
-            children = self.generateChildren(cur_state)
-            for (action,child_state) in children:
-                if self.cost.get(child_state) is not None and self.cost[child_state] <= cur_cost + 1:
-                   continue
-                if child_state in explored:
+            blankX = blank//n
+            blankY = blank%n
+            for i in range(4):
+                x = blankX + self.direction[i][0]
+                y = blankY + self.direction[i][1]
+                if not (x >= 0 and x < self.n and y >= 0 and y < self.n):
                     continue
-                self.cost[child_state] = cur_cost + 1
-                self.prev[child_state] = action
-                heapq.heappush(frontier, (self.heuristic(child_state)+cur_cost+1,cur_cost+1,child_state))
+                new_state = list(cur_state)
+                new_blank = x*self.n+y
+                new_state[new_blank]=0
+                new_state[blank]=cur_state[new_blank]
+                new_heuristic = cur_heuristic
+                
+                if(new_state[blank] == self.goal_tuple[blank]):
+                    new_heuristic-=1
+                if(new_state[new_blank] == self.goal_tuple[blank]):
+                    new_heuristic+=1
+                new_hash = cur_hash+(self.weights[blank]-self.weights[new_blank])*cur_state[new_blank]
+                new_state=tuple(new_state)
+            
+                if self.cost.get(new_hash) is not None and self.cost[new_hash] <= cur_cost + 1:
+                   continue
+                
+                self.cost[new_hash] = cur_cost + 1
+                self.prev[new_hash] = i
+                heapq.heappush(frontier, (new_heuristic+cur_cost+1,cur_cost+1,new_state,new_blank,new_hash))
 
         return ["UNSOLVABLE"] # sample output
 
@@ -151,7 +154,9 @@ class Puzzle(object):
         if n % 2 == 1:
             return (numInvert % 2 == 0)
         else:
-            (blankX, blankY) = self.getBlank(init_state)
+            blank = self.getBlank(self.init_tuple)
+            blankX=blank//self.n
+            blankY=blank%self.n
             return (blankX % 2)!=(numInvert % 2)
     
     def getNumOfInversions(self):
