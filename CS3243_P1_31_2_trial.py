@@ -123,18 +123,19 @@ class Puzzle(object):
             
             cur_cost = node[1]
             cur_state = node[2]
-            explored.add(cur_state)
-            if cur_cost>self.cost[cur_state]:
-                continue
             if cur_state == self.goal_tuple:
                 answer = self.getActions()
                 print(time.time()-start_time)
                 return answer
+
+            explored.add(cur_state)
+            if cur_cost>self.cost[cur_state]:
+                continue
             
             children = self.generateChildren(cur_state)
             for (action,child_state) in children:
                 if self.cost.get(child_state) is not None and self.cost[child_state] <= cur_cost + 1:
-                    continue
+                   continue
                 if child_state in explored:
                     continue
                 self.cost[child_state] = cur_cost + 1
