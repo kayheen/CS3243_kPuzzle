@@ -15,9 +15,8 @@ class Puzzle(object):
         self.actionNames = ["UP",  "RIGHT", "DOWN", "LEFT"]
         
         self.prev = dict()
-        self.cost = dict()
+        #self.cost = dict()
         self.n = len(init_state)
-        self.weights = [37**i for i in range(self.n*self.n)]
 
     def getBlank(self, state_tuple):
         return state_tuple.index(0)
@@ -30,22 +29,14 @@ class Puzzle(object):
                 num+=1
         return num
 
-    def hash(self, state):
-        b=1
-        h=0
-        for i in range(self.n*self.n):
-            h+=state[i]*self.weights[i]
-        return h
-
     def getActions(self):
         state = tuple(item for row in self.goal_state for item in row)
         blank = self.getBlank(self.goal_tuple)
         blankX=blank//n
         blankY=blank%n
         actionList=[]
-        hash=self.hash(state)
-        while self.prev[hash] != -1:
-            action = self.prev[hash]
+        while self.prev[state] != -1:
+            action = self.prev[state]
             actionList.append(self.actionNames[action])
             (prevX, prevY) = (blankX - self.direction[action][0], blankY - self.direction[action][1])
             prevState = list(state)
@@ -54,7 +45,6 @@ class Puzzle(object):
             state = tuple(prevState)
             blankX = prevX
             blankY = prevY
-            hash = self.hash(prevState)
 
         actionList.reverse()
         #if not self.checkActions(actionList):
@@ -93,21 +83,19 @@ class Puzzle(object):
         
         frontier = []  # priority queue
 
-        init_hash=self.hash(self.init_tuple)
-        frontier.append((self.heuristic(self.init_state), 0, self.init_tuple, self.getBlank(self.init_tuple), init_hash))
+        frontier.append((self.heuristic(self.init_state), 0, self.init_tuple, self.getBlank(self.init_tuple)))
 
-        self.prev[init_hash]=-1
-        self.cost[init_hash]=0
+        self.prev[self.init_tuple]=-1
+        #self.cost[init_hash]=0
         heapq.heapify(frontier)
 
-        while len(frontier) > 0:
+        while frontier:
             node = heapq.heappop(frontier)
             
             cur_f = node[0]
             cur_cost = node[1]
             cur_state = node[2]
             blank = node[3]
-            cur_hash = node[4]
             cur_heuristic = cur_f-cur_cost
             
             if cur_state == self.goal_tuple:
@@ -115,8 +103,8 @@ class Puzzle(object):
                 print(time.time()-start_time)
                 return answer
 
-            if cur_cost>self.cost[cur_hash]:
-                continue
+            #if cur_cost>self.cost[cur_hash]:
+                #continue
             
             blankX = blank//n
             blankY = blank%n
@@ -130,20 +118,22 @@ class Puzzle(object):
                 new_state[new_blank]=0
                 new_state[blank]=cur_state[new_blank]
                 new_heuristic = cur_heuristic
-                
+
                 if(new_state[blank] == self.goal_tuple[blank]):
                     new_heuristic-=1
                 if(new_state[new_blank] == self.goal_tuple[blank]):
                     new_heuristic+=1
-                new_hash = cur_hash+(self.weights[blank]-self.weights[new_blank])*cur_state[new_blank]
+                
                 new_state=tuple(new_state)
             
-                if self.cost.get(new_hash) is not None and self.cost[new_hash] <= cur_cost + 1:
-                   continue
+                if self.prev.get(new_state) is not None:
+                    continue
+                #if self.cost.get(new_hash) is not None and self.cost[new_hash] <= cur_cost + 1:
+                   #continue
                 
-                self.cost[new_hash] = cur_cost + 1
-                self.prev[new_hash] = i
-                heapq.heappush(frontier, (new_heuristic+cur_cost+1,cur_cost+1,new_state,new_blank,new_hash))
+                #self.cost[new_hash] = cur_cost + 1
+                self.prev[new_state] = i
+                heapq.heappush(frontier, (new_heuristic+cur_cost+1,cur_cost+1,new_state,new_blank))
 
         return ["UNSOLVABLE"] # sample output
 
