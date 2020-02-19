@@ -83,7 +83,7 @@ class Puzzle(object):
         
         frontier = []  # priority queue
 
-        frontier.append((self.heuristic(self.init_state), 0, self.init_tuple, self.getBlank(self.init_tuple)))
+        frontier.append((self.heuristic(self.init_state), self.heuristic(self.init_state), self.init_tuple, self.getBlank(self.init_tuple)))
 
         self.prev[self.init_tuple]=-1
         #self.cost[init_hash]=0
@@ -93,10 +93,10 @@ class Puzzle(object):
             node = heapq.heappop(frontier)
             
             cur_f = node[0]
-            cur_cost = node[1]
+            cur_cost = node[0] - node[1]
             cur_state = node[2]
             blank = node[3]
-            cur_heuristic = cur_f-cur_cost
+            cur_heuristic = node[1]
             
             if cur_state == self.goal_tuple:
                 answer = self.getActions()
@@ -133,7 +133,7 @@ class Puzzle(object):
                 
                 #self.cost[new_hash] = cur_cost + 1
                 self.prev[new_state] = i
-                heapq.heappush(frontier, (new_heuristic+cur_cost+1,cur_cost+1,new_state,new_blank))
+                heapq.heappush(frontier, (new_heuristic+cur_cost+1,new_heuristic,new_state,new_blank))
 
         return ["UNSOLVABLE"] # sample output
 
