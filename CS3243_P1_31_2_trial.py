@@ -17,6 +17,8 @@ class Puzzle(object):
         self.prev = dict()
         #self.cost = dict()
         self.n = len(init_state)
+        self.size = self.n*self.n
+        
 
     def getBlank(self, state_tuple):
         return state_tuple.index(0)
@@ -33,7 +35,7 @@ class Puzzle(object):
         state = tuple(item for row in self.goal_state for item in row)
         blank = self.getBlank(self.goal_tuple)
         blankX=blank//n
-        blankY=blank%n
+        blankY=blank - blankX * n
         actionList=[]
         while self.prev[state] != -1:
             action = self.prev[state]
@@ -83,7 +85,7 @@ class Puzzle(object):
         
         frontier = []  # priority queue
 
-        frontier.append((self.heuristic(self.init_state), self.heuristic(self.init_state), self.init_tuple, self.getBlank(self.init_tuple)))
+        frontier.append((self.heuristic(self.init_tuple), self.heuristic(self.init_tuple), self.init_tuple, self.getBlank(self.init_tuple)))
 
         self.prev[self.init_tuple]=-1
         #self.cost[init_hash]=0
@@ -93,10 +95,10 @@ class Puzzle(object):
             node = heapq.heappop(frontier)
             
             cur_f = node[0]
-            cur_cost = node[0] - node[1]
+            cur_heuristic = node[1]
+            cur_cost = cur_f - cur_heuristic
             cur_state = node[2]
             blank = node[3]
-            cur_heuristic = node[1]
             
             if cur_state == self.goal_tuple:
                 answer = self.getActions()
@@ -105,9 +107,8 @@ class Puzzle(object):
 
             #if cur_cost>self.cost[cur_hash]:
                 #continue
-            
             blankX = blank//n
-            blankY = blank%n
+            blankY = blank - blankX * n
             for i in range(4):
                 x = blankX + self.direction[i][0]
                 y = blankY + self.direction[i][1]
@@ -117,23 +118,23 @@ class Puzzle(object):
                 new_blank = x*self.n+y
                 new_state[new_blank]=0
                 new_state[blank]=cur_state[new_blank]
+                new_state=tuple(new_state)
+                if self.prev.get(new_state) is not None:
+                    continue
+                
                 new_heuristic = cur_heuristic
 
                 if(new_state[blank] == self.goal_tuple[blank]):
                     new_heuristic-=1
-                if(new_state[new_blank] == self.goal_tuple[blank]):
+                elif(new_state[blank] == self.goal_tuple[new_blank]):
                     new_heuristic+=1
-                
-                new_state=tuple(new_state)
-            
-                if self.prev.get(new_state) is not None:
-                    continue
+
                 #if self.cost.get(new_hash) is not None and self.cost[new_hash] <= cur_cost + 1:
                    #continue
                 
                 #self.cost[new_hash] = cur_cost + 1
                 self.prev[new_state] = i
-                heapq.heappush(frontier, (new_heuristic+cur_cost+1,new_heuristic,new_state,new_blank))
+                heapq.heappush(frontier, (new_heuristic+cur_cost+1, new_heuristic, new_state, new_blank))
 
         return ["UNSOLVABLE"] # sample output
 
