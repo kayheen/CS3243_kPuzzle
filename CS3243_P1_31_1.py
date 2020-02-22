@@ -18,6 +18,7 @@ class Puzzle(object):
         self.size = n*n
         self.visited = dict()
 
+    #this method gets the position of the blank state 
     def getBlank(self, state):
         for i in range(self.n):
             for j in range(self.n):
@@ -27,9 +28,11 @@ class Puzzle(object):
     def numToPair(self, num):
         return (num/n, num%n)
 
+    # converts a tuple ie a coordinate into the corresponding number in the tuple
     def pairToNum(self, p):
         return p[0]*n+p[1]
 
+    # checks if the current position is within the n*n tile
     def isValid(self, i, j):
         return i>=0 and i<self.n and j>=0 and j<self.n
 
@@ -82,25 +85,36 @@ class Puzzle(object):
         init_tuple = tuple(item for row in self.init_state for item in row)
         self.visited[init_tuple]=-1
         queue.append((init_tuple, 0, self.getBlank(init_state)))
+        # major bfs queue 
         while queue:
             head = queue.popleft()
             state= head[0]
             (x, y) = head[2]
-            step = head[1]
+            step = head[1] 
+            # looks through the 4 different options that the tiles around can move to this blank space
             for i in range(4):
+            		# choosing the next tile to move
                 (nextX, nextY) = (x + self.actions[i][0], y + self.actions[i][1])
+
+                # if not a valid movement, then try another state
                 if not self.isValid(nextX, nextY):
                     continue
+
+                # a valid movement.
                 nextState = list(state)
                 nextState[self.pairToNum((nextX, nextY))]=0
                 nextState[self.pairToNum((x,y))]=state[self.pairToNum((nextX, nextY))]
                 nextState = tuple(nextState)
+
+                # if the state has been visited already, then try another state
                 if not self.visited.get(nextState) is None:
                     continue
+                # else set the next state to visited (and also add the current movement to it) 
                 self.visited[nextState] = i
                 if nextState == goal_tuple:
                     queue.clear()
                     return self.getActions()
+                # add this next state to the queue. 
                 queue.append((nextState, step+1, (nextX, nextY)))
         
         return ['UNSOLVABLE']
