@@ -1,6 +1,7 @@
 import os
 import sys
 import copy
+import time 
 
 from collections import deque
 
@@ -15,8 +16,12 @@ class Puzzle(object):
         self.initStateString = list()
 
         self.n = len(init_state)
-        self.size = n*n
+        self.size = self.n*self.n
         self.visited = dict()
+
+        self.numNodesGen = 0
+        self.maxNumNodesInQ = 0
+        self.time = 0
 
     #this method gets the position of the blank state 
     def getBlank(self, state):
@@ -30,7 +35,7 @@ class Puzzle(object):
 
     # converts a tuple ie a coordinate into the corresponding number in the tuple
     def pairToNum(self, p):
-        return p[0]*n+p[1]
+        return p[0]*self.n+p[1]
 
     # checks if the current position is within the n*n tile
     def isValid(self, i, j):
@@ -84,7 +89,7 @@ class Puzzle(object):
         goal_tuple = tuple(item for row in self.goal_state for item in row)
         init_tuple = tuple(item for row in self.init_state for item in row)
         self.visited[init_tuple]=-1
-        queue.append((init_tuple, 0, self.getBlank(init_state)))
+        queue.append((init_tuple, 0, self.getBlank(self.init_state)))
         # major bfs queue 
         while queue:
             head = queue.popleft()
@@ -116,13 +121,16 @@ class Puzzle(object):
                     return self.getActions()
                 # add this next state to the queue. 
                 queue.append((nextState, step+1, (nextX, nextY)))
+                self.numNodesGen = self.numNodesGen + 1
+                #print (self.numNodesGen)
+                self.maxNumNodesInQ = max(self.maxNumNodesInQ, len(queue))
         
         return ['UNSOLVABLE']
         
 
     def isSolvable(self):
         numInvert = self.getNumOfInversions()
-        if n % 2 == 1:
+        if self.n % 2 == 1:
             return (numInvert % 2 == 0)
         else:
             (blankX, blankY) = self.getBlank(init_state)
@@ -130,8 +138,8 @@ class Puzzle(object):
     
     def getNumOfInversions(self):
         # create the string of interest for comparison 
-        for row in range(len(init_state)):
-            for col in range(len(init_state)):
+        for row in range(len(self.init_state)):
+            for col in range(len(self.init_state)):
                 self.initStateString.append(self.init_state[row][col]);
         # start counting the inversions. 
         invCount = 0;
@@ -144,9 +152,12 @@ class Puzzle(object):
     def solve(self):
         #TODO
         # implement your search algorithm here
+        start = time.time()
         if (self.isSolvable()):
           #then call BFS 
-          return self.bfs();
+          actions = self.bfs();
+          self.time = time.time() - start
+          return actions
         else:
           return ["UNSOLVABLE"]
 
