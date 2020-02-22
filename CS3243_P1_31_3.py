@@ -26,6 +26,10 @@ class Puzzle(object):
         
         self.prev = dict()
 
+        self.numNodesGen = 0
+        self.maxNumNodesInQ = 0
+        self.time = 0
+
     def getBlank(self, state_tuple):
         return state_tuple.index(0)
 
@@ -40,8 +44,8 @@ class Puzzle(object):
     def getActions(self):
         state = tuple(item for row in self.goal_state for item in row)
         blank = self.getBlank(self.goal_tuple)
-        blankX=blank//n
-        blankY=blank%n
+        blankX=blank//self.n
+        blankY=blank%self.n
         actionList=[]
         while self.prev[state] != -1:
             action = self.prev[state]
@@ -110,14 +114,15 @@ class Puzzle(object):
             
             if cur_state == self.goal_tuple:
                 answer = self.getActions()
-                print(time.time()-start_time)
+                self.time = time.time() - start_time
+                print(self.time)
                 return answer
 
             #if cur_cost>self.cost[cur_hash]:
                 #continue
             
-            blankX = blank//n
-            blankY = blank%n
+            blankX = blank//self.n
+            blankY = blank%self.n
             for i in range(4):
                 x = blankX + self.direction[i][0]
                 y = blankY + self.direction[i][1]
@@ -144,6 +149,8 @@ class Puzzle(object):
                 
                 self.prev[new_state] = i
                 heapq.heappush(frontier, (new_heuristic+cur_cost+1,new_state,new_blank))
+                self.numNodesGen = self.numNodesGen + 1
+                self.maxNumNodesInQ = max(self.maxNumNodesInQ, len(frontier))
 
         return ["UNSOLVABLE"] # sample output
 
@@ -151,7 +158,7 @@ class Puzzle(object):
 
     def isSolvable(self):
         numInvert = self.getNumOfInversions()
-        if n % 2 == 1:
+        if self.n % 2 == 1:
             return (numInvert % 2 == 0)
         else:
             blank = self.getBlank(self.init_tuple)
