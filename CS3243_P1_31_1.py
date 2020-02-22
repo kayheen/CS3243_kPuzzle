@@ -31,7 +31,7 @@ class Puzzle(object):
                     return (i,j)
 
     def numToPair(self, num):
-        return (num/n, num%n)
+        return (num/self.n, num%self.n)
 
     # converts a tuple ie a coordinate into the corresponding number in the tuple
     def pairToNum(self, p):
