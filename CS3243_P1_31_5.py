@@ -1,11 +1,7 @@
 import os
 import sys
 import CS3243_P1_31_1 as Case1
-<<<<<<< HEAD
 import CS3243_P1_31_2_trial as Case2
-=======
-import CS3243_P1_31_2 as Case2
->>>>>>> 2a10ca0f632605d2d56ace5f7a415d3c2cdd727b
 import CS3243_P1_31_3 as Case3
 import CS3243_P1_31_4 as Case4
 
