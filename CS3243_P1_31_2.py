@@ -11,6 +11,37 @@ class Puzzle(object):
         self.goal_state = goal_state
         self.actions = list()
 
+        self.init_tuple = tuple(item for row in self.init_state for item in row)
+        self.goal_tuple = tuple(item for row in self.goal_state for item in row)
+
+        self.n = len(init_state)
+    #this method gets the position of the blank state 
+    def getBlank(self, state_tuple):
+        return state_tuple.index(0)
+
+    def checkActions(self, actionList):
+        state = list(self.init_tuple)
+        for action in actionList:
+            blank = self.getBlank(state)
+            if (action == "UP"):
+                # move the bottom cell upwards
+                state[blank]= state[blank+self.n]
+                state[blank+self.n]=0
+            elif (action == "DOWN"):
+                # move the top cell downwards 
+                state[blank]=state[blank-self.n]
+                state[blank-self.n]=0
+            elif (action == "LEFT"):
+                # move the right cell leftwards
+                state[blank] = state[blank+1]
+                state[blank+1] = 0
+            elif (action == "RIGHT"):
+                #move the left cell rightwards 
+                state[blank]=state[blank-1]
+                state[blank-1]=0
+        return tuple(state) == self.goal_tuple
+
+
     def solve(self):
         if not self.is_solvable():
             return ["UNSOLVABLE"]
@@ -174,6 +205,12 @@ if __name__ == "__main__":
 
     puzzle = Puzzle(init_state, goal_state)
     ans = puzzle.solve()
+
+    # delete this when we submit
+    if (puzzle.checkActions(ans) is True):
+        print ("Ok")
+    else:
+        print("wrong")
 
     with open(sys.argv[2], 'a') as f:
         for answer in ans:
