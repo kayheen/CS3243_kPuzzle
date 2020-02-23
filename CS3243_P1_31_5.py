@@ -83,12 +83,12 @@ if __name__ == "__main__":
     ans1 = puzzle1.solve()
     ans2 = puzzle2.solve()
     ans3 = puzzle3.solve()
-    #ans4 = puzzle4.solve()
+    ans4 = puzzle4.solve()
 
     printResults(puzzle1, 1)
     printResults(puzzle2, 2)
     printResults(puzzle3, 3)
-    #printResults(puzzle4, 4)
+    printResults(puzzle4, 4)
 
     with open(sys.argv[2], 'a') as f:
         for answer in ans1:
