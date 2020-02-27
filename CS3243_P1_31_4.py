@@ -13,45 +13,68 @@ class Puzzle(object):
         self.goal_state = goal_state
         self.init_tuple = tuple(item for row in self.init_state for item in row)
         self.goal_tuple = tuple(item for row in self.goal_state for item in row)
+        self.n = len(init_state)
 
-        # self.euclidDist = [[0 for i in self.goal_tuple] for j in self.goal_tuple]
+        self.euclidDist = [[0 for i in self.goal_tuple] for j in self.goal_tuple]
 
-        # use a tuple to identify the postion instead of a 2d array. 
-        # for currPos in range(len(self.goal_tuple)):
-        #     for goalPos in range(len(self.goal_tuple)):
-        #         self.euclidDist[currPos][goalPos] = math.sqrt((goalPos//self.n - currPos//self.n) **2 +
-        #             (goalPos%self.n - currPos%self.n)**2)
+        # use a tuple to identify the postion instead of a 2d array.
+        # this stores a 2d array correspondence of currPostion to currValue and the corresponding euclidean distance   
+        for currPos in range(len(self.goal_tuple)): # currPos represents position in currTuple 
+            for numInGoal in range(len(self.goal_tuple)): # numInGoal represents a number (not a position)
+                goalPos = self.goal_tuple.index(numInGoal) #this gets the index of the particulation number in the goal.
+                self.euclidDist[currPos][numInGoal] = math.sqrt((goalPos//self.n - currPos//self.n) **2 +
+                    (goalPos%self.n - currPos%self.n)**2)
 
         self.actions = list()
-        self.n = len(init_state)
+        
 
         self.numNodesGen = 0
         self.maxNumNodesInQ = 0
         self.time = 0
 
+    def getBlank(self, state_tuple):
+        return state_tuple.index(0)
+        
     def getTuple(self, state, target):
         for i in range(self.n):
             for j in range(self.n):
                 if state[i][j]==target:
                     return (i,j)
+    def getGoalPos(self, targetNum):
+        for i in range(len(self.goal_tuple)):
+            if targetNum == self.goal_tuple[i]:
+                return i
+
+        return -1
 
     def euclideanHeu(self, state):
         finalHeu = 0
-        maxrange = self.n * self.n
-        for i in range(0, maxrange):
-            (xInit, yInit) = self.getTuple(state, i)
-            (xFinal, yFinal) = self.getTuple(self.goal_state, i)
-
-            value = math.sqrt((xFinal - xInit)**2 + (yFinal - yInit)**2)
-            #print (str(i) + "th time with value: " + str(value))
-            finalHeu = finalHeu + value
-        # #print ("final heauristic value: " + str(finalHeu))
-        # state_tuple = tuple(item for row in self.init_state for item in row)
+        # maxrange = self.n * self.n
         # for i in range(0, maxrange):
         #     (xInit, yInit) = self.getTuple(state, i)
         #     (xFinal, yFinal) = self.getTuple(self.goal_state, i)
 
+        #     value = math.sqrt((xFinal - xInit)**2 + (yFinal - yInit)**2)
+        #     #print (str(i) + "th time with value: " + str(value))
+        #     finalHeu = finalHeu + value
+
+        # #print ("final heauristic value: " + str(finalHeu))
+        #state_tuple = tuple(item for row in self.init_state for item in row)
+        #for i in range(0, maxrange):
+        #     (xInit, yInit) = self.getTuple(state, i)
+        #     (xFinal, yFinal) = self.getTuple(self.goal_state, i)
+
         #     currPos = 
+
+        for row in range(0, self.n):
+            for col in range(0, self.n):
+                currNumInPos = state[row][col]
+                indexOfNum = row * self.n + col
+                # actualIndexInGoal = self.getGoalPos(currNumInPos)
+
+                eucliValue = self.euclidDist[indexOfNum][currNumInPos]
+
+                finalHeu = finalHeu + eucliValue
 
         return finalHeu 
 
