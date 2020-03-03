@@ -17,7 +17,7 @@ class Puzzle(object):
         self.actionNames = ["UP",  "RIGHT", "DOWN", "LEFT"]
         
         self.prev = dict()
-        #self.cost = dict()
+        self.cost = dict()
         self.n = len(self.init_state)
         self.size = self.n*self.n
         
@@ -93,7 +93,7 @@ class Puzzle(object):
         frontier.append((self.heuristic(self.init_tuple), self.init_tuple, self.getBlank(self.init_tuple)))
 
         self.prev[self.init_tuple]=-1
-        #self.cost[init_hash]=0
+        self.cost[self.init_tuple]=0
         heapq.heapify(frontier)
 
         while frontier:
@@ -111,8 +111,8 @@ class Puzzle(object):
                 print(self.time)
                 return answer
 
-            #if cur_cost>self.cost[cur_hash]:
-                #continue
+            if cur_cost>self.cost[cur_state]:
+                continue
             blankX = blank//self.n
             blankY = blank - blankX * self.n
             for i in range(4):
@@ -125,8 +125,6 @@ class Puzzle(object):
                 new_state[new_blank]=0
                 new_state[blank]=cur_state[new_blank]
                 new_state=tuple(new_state)
-                if self.prev.get(new_state) is not None:
-                    continue
                 
                 new_heuristic = cur_heuristic
 
@@ -135,10 +133,10 @@ class Puzzle(object):
                 elif(new_state[blank] == self.goal_tuple[new_blank]):
                     new_heuristic+=1
 
-                #if self.cost.get(new_hash) is not None and self.cost[new_hash] <= cur_cost + 1:
-                   #continue
+                if self.cost.get(new_state) is not None and self.cost[new_state] <= cur_cost + 1:
+                    continue
                 
-                #self.cost[new_hash] = cur_cost + 1
+                self.cost[new_state] = cur_cost + 1
                 self.prev[new_state] = i
                 heapq.heappush(frontier, (new_heuristic+cur_cost+1, new_state, new_blank))
                 self.numNodesGen = self.numNodesGen + 1

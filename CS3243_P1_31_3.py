@@ -15,6 +15,7 @@ class Puzzle(object):
         self.init_tuple = tuple(item for row in self.init_state for item in row)
         self.goal_tuple = tuple(item for row in self.goal_state for item in row)
         self.pos = [0 for i in self.goal_tuple]
+        
         for i in range(len(self.goal_tuple)):
             self.pos[self.goal_tuple[i]] = i
         self.manhattanDist = [[0 for i in self.goal_tuple] for j in self.goal_tuple]
@@ -27,6 +28,7 @@ class Puzzle(object):
         self.actionNames = ["UP",  "RIGHT", "DOWN", "LEFT"]
         
         self.prev = dict()
+        self.cost = dict()
 
         self.numNodesGen = 0
         self.maxNumNodesInQ = 0
@@ -100,7 +102,7 @@ class Puzzle(object):
         frontier.append((self.heuristic(self.init_tuple), self.init_tuple, self.getBlank(self.init_tuple)))
 
         self.prev[self.init_tuple]=-1
-        #self.cost[init_hash]=0
+        self.cost[self.init_tuple]=0
         heapq.heapify(frontier)
 
         while frontier:
@@ -111,8 +113,6 @@ class Puzzle(object):
             cur_heuristic = self.heuristic(cur_state)
             cur_cost = cur_f - cur_heuristic
             blank = node[2]
-            #if cur_cost>15:
-                #print(cur_heuristic)
             
             if cur_state == self.goal_tuple:
                 answer = self.getActions()
@@ -120,8 +120,8 @@ class Puzzle(object):
                 print(self.time)
                 return answer
 
-            #if cur_cost>self.cost[cur_hash]:
-                #continue
+            if cur_cost>self.cost[cur_state]:
+                continue
             
             blankX = blank//self.n
             blankY = blank%self.n
@@ -142,12 +142,10 @@ class Puzzle(object):
                 
                 new_state=tuple(new_state)
             
-                if self.prev.get(new_state) is not None:
-                    continue
-                #if self.cost.get(new_hash) is not None and self.cost[new_hash] <= cur_cost + 1:
-                   #continue
+                if self.cost.get(new_state) is not None and self.cost[new_state] <= cur_cost + 1:
+                   continue
                 
-                #self.cost[new_hash] = cur_cost + 1
+                self.cost[new_state] = cur_cost + 1
                 
                 self.prev[new_state] = i
                 heapq.heappush(frontier, (new_heuristic+cur_cost+1,new_state,new_blank))
