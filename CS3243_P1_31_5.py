@@ -5,16 +5,49 @@ import CS3243_P1_31_2 as Case2
 import CS3243_P1_31_3 as Case3
 import CS3243_P1_31_4 as Case4
 import random 
-
-minimumTime = 10000000000
-fastestAlgo = "Uninformed Search"
+import math 
 
 
-def printResults(ans, num):
-    print (str(num) + " -> Total Number of Nodes Generated: " + str(ans.numNodesGen))
-    print (str(num) + " -> Max Number of Nodes Generated: " + str(ans.maxNumNodesInQ))
-    print (str(num) + " -> Time taken: " + str(ans.time))
+def printResults(ans, algo):
+    print (algo+ " -> Total Number of Nodes Generated: " + str(ans.numNodesGen))
+    print (algo + " -> Max Number of Nodes Generated: " + str(ans.maxNumNodesInQ))
+    print (algo + " -> Time taken: " + str(ans.time))
     print (" ")
+    compareResults(ans, algo)
+
+def compareResults(ans, algo):
+    global minimumNodeGenerated
+    global minimumMaxNodeInQ
+    global fastestAlgo
+    global smallestSpaceAlgo
+
+    minimumNodeGenerated = min(minimumNodeGenerated, ans.numNodesGen)
+    minimumMaxNodeInQ = min(minimumMaxNodeInQ, ans.maxNumNodesInQ)
+
+    if (minimumNodeGenerated == ans.numNodesGen and minimumNodeGenerated != 0) :
+        fastestAlgo = algo
+
+    if (minimumMaxNodeInQ == ans.maxNumNodesInQ and minimumMaxNodeInQ != 0):
+        smallestSpaceAlgo = algo
+
+def printFinalResults():
+    global minimumNodeGenerated
+    global minimumMaxNodeInQ
+    global fastestAlgo
+    global smallestSpaceAlgo
+
+
+    print(" ")
+    print("Minimum number of nodes generated: " + str(minimumNodeGenerated))
+    print( "Lowest Time Complexity: " + str(fastestAlgo))
+    print("Minimum max number of nodes in queue: " + str(minimumMaxNodeInQ))
+    print("Lowest Space Complexity: " + str(smallestSpaceAlgo))
+    minimumNodeGenerated = 10000000000
+    minimumMaxNodeInQ = 1000000000
+    fastestAlgo = "NIL"
+    smallestSpaceAlgo = "NIL"
+    print("====== End of Test ======")
+    print(" ")
 
 def initArray(lines, n, init_state, goal_state):
     # n = num rows in input file
@@ -80,11 +113,12 @@ def callRelevantMethods(lines):
     ans3 = puzzle3.solve()
     ans4 = puzzle4.solve()
 
-    printResults(puzzle1, 1)
-    printResults(puzzle2, 2)
-    printResults(puzzle3, 3)
-    printResults(puzzle4, 4)
+    printResults(puzzle1, "UninformedSearch BFS")
+    printResults(puzzle2, "InformedSearch Misplacements")
+    printResults(puzzle3, "InformedSearch Manhatten Distance")
+    printResults(puzzle4, "InformedSearch Euclidean Distance")
 
+    printFinalResults()
     # with open(sys.argv[2], 'a') as f:
     #     for answer in ans1:
     #         f.write(answer+'\n')
@@ -120,11 +154,23 @@ def callRelevantMethodsWithN(lines, n):
     ans4 = puzzle4.solve()
 
     # printResults(puzzle1, 1)
-    printResults(puzzle2, 2)
-    printResults(puzzle3, 3)
-    printResults(puzzle4, 4)
+    printResults(puzzle2, "InformedSearch Misplacements")
+    printResults(puzzle3, "InformedSearch Manhatten Distance")
+    printResults(puzzle4, "InformedSearch Euclidean Distance")
+
+    printFinalResults()
+    
 
 if __name__ == "__main__":
+    global minimumNodeGenerated
+    global minimumMaxNodeInQ 
+    global fastestAlgo 
+    global smallestSpaceAlgo 
+
+    minimumNodeGenerated = 10000000000
+    minimumMaxNodeInQ = 1000000000
+    fastestAlgo = "NIL"
+    smallestSpaceAlgo = "NIL"
     #argv[0] represents the name of the file that is being executed
     #argv[1] represents name of input file
     #argv[2] represents name of destination output file
