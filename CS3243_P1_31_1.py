@@ -133,7 +133,7 @@ class Puzzle(object):
         if self.n % 2 == 1:
             return (numInvert % 2 == 0)
         else:
-            (blankX, blankY) = self.getBlank(init_state)
+            (blankX, blankY) = self.getBlank(self.init_state)
             return (blankX % 2)!=(numInvert % 2)
     
     def getNumOfInversions(self):
