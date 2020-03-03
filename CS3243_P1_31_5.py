@@ -5,7 +5,8 @@ import CS3243_P1_31_2 as Case2
 import CS3243_P1_31_3 as Case3
 import CS3243_P1_31_4 as Case4
 import random 
-import math 
+import multiprocessing
+import time 
 
 
 def printResults(ans, algo):
@@ -36,14 +37,13 @@ def printFinalResults():
     global fastestAlgo
     global smallestSpaceAlgo
 
-
     print(" ")
     print("Minimum number of nodes generated: " + str(minimumNodeGenerated))
     print( "Lowest Time Complexity: " + str(fastestAlgo))
     print("Minimum max number of nodes in queue: " + str(minimumMaxNodeInQ))
     print("Lowest Space Complexity: " + str(smallestSpaceAlgo))
-    minimumNodeGenerated = 10000000000
-    minimumMaxNodeInQ = 1000000000
+    minimumNodeGenerated = 1000000
+    minimumMaxNodeInQ = 1000000
     fastestAlgo = "NIL"
     smallestSpaceAlgo = "NIL"
     print("====== End of Test ======")
@@ -124,7 +124,7 @@ def callRelevantMethods(lines):
     #         f.write(answer+'\n')
 
 def callRelevantMethodsWithN(lines, n):
-
+    #print("got in here")
     # Instantiate a 2nd 2D list of size n x n
     init_state2 = [[0 for i in range(n)] for j in range(n)]
     goal_state2 = [[0 for i in range(n)] for j in range(n)]
@@ -153,6 +153,7 @@ def callRelevantMethodsWithN(lines, n):
     ans3 = puzzle3.solve()
     ans4 = puzzle4.solve()
 
+    print(ans2)
     # printResults(puzzle1, 1)
     printResults(puzzle2, "InformedSearch Misplacements")
     printResults(puzzle3, "InformedSearch Manhatten Distance")
@@ -204,8 +205,20 @@ if __name__ == "__main__":
     for i in range (1, 51):
         print ("====== Test Case " + str(i) + " for n = 4 ======")
         random.shuffle(list4)
-        # print(list4)
+        #print(list4)
         #str4 = " ".join(str(j) for j in list4)
+        # Start foo as a process
+        p = multiprocessing.Process(target=callRelevantMethodsWithN, name="callRelevantMethodsWithN", args=(list4, 4,))
+        p.start()
+
+        # Wait 10 seconds for foo
+        time.sleep(20)
+
+        # Terminate foo
+        p.terminate()
+
+        # Cleanup
+        p.join()
         #callRelevantMethodsWithN(list4, 4)
         # print(str4)
         list4 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
@@ -215,7 +228,19 @@ if __name__ == "__main__":
         random.shuffle(list5)
         #print(list5)
         #str5 = " ".join(str(j) for j in list5)
-        callRelevantMethodsWithN(list5, 5)
+        # Start foo as a process
+        p = multiprocessing.Process(target=callRelevantMethodsWithN, name="callRelevantMethodsWithN", args=(list5, 5,))
+        p.start()
+
+        # Wait 10 seconds for foo
+        time.sleep(20)
+
+        # Terminate foo
+        p.terminate()
+
+        # Cleanup
+        p.join()
+        # callRelevantMethodsWithN(list5, 5)
         #print(str5)
         list5 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]
 
