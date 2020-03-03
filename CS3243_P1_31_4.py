@@ -64,8 +64,8 @@ class Puzzle(object):
             blankY = prevY
 
         actionList.reverse()
-        if not self.checkActions(actionList):
-            print("Wrong")
+        #if not self.checkActions(actionList):
+            #print("Wrong")
         return actionList
     
     def checkActions(self, actionList):
