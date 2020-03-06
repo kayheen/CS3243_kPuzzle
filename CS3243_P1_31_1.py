@@ -58,8 +58,8 @@ class Puzzle(object):
             blankY = prevY
 
         actionList.reverse()
-        if not self.checkActions(actionList):
-          print("Wrong")
+        #if not self.checkActions(actionList):
+          #print("Wrong")
         return actionList
 
     def checkActions(self, actionList):
@@ -71,7 +71,7 @@ class Puzzle(object):
           state[x][y]= state[x+1][y]
           state[x+1][y]=0
         elif (action == "DOWN"):
-          # move the top cell downwards 
+          # move the top cell downwards
           state[x][y]=state[x-1][y]
           state[x-1][y]=0
         elif (action == "LEFT"):
@@ -133,7 +133,7 @@ class Puzzle(object):
         if self.n % 2 == 1:
             return (numInvert % 2 == 0)
         else:
-            (blankX, blankY) = self.getBlank(init_state)
+            (blankX, blankY) = self.getBlank(self.init_state)
             return (blankX % 2)!=(numInvert % 2)
     
     def getNumOfInversions(self):

@@ -1,24 +1,63 @@
 import os
 import sys
-import heapq
-from copy import copy, deepcopy
+import heapq # priority queue
+import copy
+import time
 
+# h1: number of misplacement
 
 class Puzzle(object):
     def __init__(self, init_state, goal_state):
         # you may add more attributes if you think is useful
         self.init_state = init_state
         self.goal_state = goal_state
-        self.actions = list()
-
         self.init_tuple = tuple(item for row in self.init_state for item in row)
         self.goal_tuple = tuple(item for row in self.goal_state for item in row)
+        self.direction = [(1, 0), (0, -1), (-1, 0), (0, 1)]
+        self.actionNames = ["UP",  "RIGHT", "DOWN", "LEFT"]
+        
+        self.prev = dict()
+        self.cost = dict()
+        self.n = len(self.init_state)
+        self.size = self.n*self.n
+        
+        self.numNodesGen = 0
+        self.maxNumNodesInQ = 0
+        self.time = 0
 
-        self.n = len(init_state)
-    #this method gets the position of the blank state 
     def getBlank(self, state_tuple):
         return state_tuple.index(0)
 
+    # num of incorrect number
+    def heuristic(self, state):
+        num = 0
+        for i in range(len(state)):
+            if state[i]!=self.goal_tuple[i] and state[i]!=0:
+                num+=1
+        return num
+
+    def getActions(self):
+        state = tuple(item for row in self.goal_state for item in row)
+        blank = self.getBlank(self.goal_tuple)
+        blankX=blank//self.n
+        blankY=blank - blankX *self.n
+        actionList=[]
+        while self.prev[state] != -1:
+            action = self.prev[state]
+            actionList.append(self.actionNames[action])
+            (prevX, prevY) = (blankX - self.direction[action][0], blankY - self.direction[action][1])
+            prevState = list(state)
+            prevState[prevX*self.n+prevY]=0
+            prevState[blankX*self.n+blankY]=state[prevX*self.n+prevY]
+            state = tuple(prevState)
+            blankX = prevX
+            blankY = prevY
+
+        actionList.reverse()
+        #if not self.checkActions(actionList):
+         # print("Wrong")
+        return actionList
+    
     def checkActions(self, actionList):
         state = list(self.init_tuple)
         for action in actionList:
@@ -41,124 +80,90 @@ class Puzzle(object):
                 state[blank-1]=0
         return tuple(state) == self.goal_tuple
 
-
     def solve(self):
-        if not self.is_solvable():
+        #TODO
+        # implement your search algorithm here
+
+        start_time = time.time()
+        if not self.isSolvable():
             return ["UNSOLVABLE"]
         
-        frontier = []  # contains tuples of (f, prev_state, curr_state, steps)
-        heapq.heappush(frontier, (0, None, self.init_state, []))  # first step
-        
+        frontier = []  # priority queue
+
+        frontier.append((self.heuristic(self.init_tuple), self.init_tuple, self.getBlank(self.init_tuple)))
+
+        self.prev[self.init_tuple]=-1
+        self.cost[self.init_tuple]=0
+        heapq.heapify(frontier)
+
         while frontier:
-            # helper to calculate heuristic of current state
-            def calc_heur(curr_state):
-                misplaced_tile = 0
-                for i in range(len(curr_state)):
-                    for j in range(len(curr_state)):
-                        if curr_state[i][j] != self.goal_state[i][j]:
-                            misplaced_tile += 1
-                return misplaced_tile
-
-            # helper to generate the possible moves
-            def generate_moves(curr_state):
-                possible_moves = []
-                
-                # find where the space is
-                for i in range(len(curr_state)):
-                    for j in range(len(curr_state)):
-                        if curr_state[i][j] == 0:
-                            space_loc = (i, j)
-                            break
-                
-                i = space_loc[0]
-                j = space_loc[1]
-
-                # move blank up
-                up_state = deepcopy(curr_state)
-                if i != 0:
-                    temp = up_state[i-1][j]
-                    up_state[i-1][j] = up_state[i][j]
-                    up_state[i][j] = temp  # tile has been moved down
-                    possible_moves.append([up_state, 'DOWN'])
-
-                # move blank down
-                down_state = deepcopy(curr_state)
-                if i != len(curr_state)-1:
-                    temp = down_state[i+1][j]
-                    down_state[i+1][j] = down_state[i][j]
-                    down_state[i][j] = temp # tile has been moved up
-                    possible_moves.append([down_state, 'UP'])
-
-                # move blank left
-                left_state = deepcopy(curr_state)
-                if j != 0:
-                    temp = left_state[i][j-1]
-                    left_state[i][j-1] = left_state[i][j]
-                    left_state[i][j] = temp # tile has been moved right
-                    possible_moves.append([left_state, 'RIGHT'])
-
-                # move blank right
-                right_state = deepcopy(curr_state)
-                if j != len(curr_state)-1:
-                    temp = right_state[i][j+1]
-                    right_state[i][j+1] = right_state[i][j]
-                    right_state[i][j] = temp # tile has been moved left
-                    possible_moves.append([right_state, 'LEFT'])
-
-                return possible_moves
-            
             node = heapq.heappop(frontier)
-            curr_f = node[0]
-            prev_state = node[1]
-            curr_state = node[2]
-
-            # goal check, in this case if misplaced tile is zero can stop
-            if calc_heur(curr_state) == 0:
-                return node[3]
-
-            # explore all the possible actions
-            possible_moves = generate_moves(curr_state)
-
-            for move in possible_moves:
-                next_state = move[0]
-                h = calc_heur(next_state)
-                
-                next_action = move[1]
-                curr_actions = node[3]
-                action_list = copy(curr_actions)
-                action_list.append(next_action)
-                
-                # don't waste time by going back to the previous state
-                if next_state != prev_state:
-                    heapq.heappush(frontier, (len(action_list) + h, curr_state, next_state, action_list))
-                    
-                if h == 0:
-                    node = heapq.heappop(frontier)
-                    return node[3]
             
-        return node[3]
+            cur_f = node[0]
+            cur_heuristic = self.heuristic(node[1])
+            cur_cost = cur_f - cur_heuristic
+            cur_state = node[1]
+            blank = node[2]
+            
+            if cur_state == self.goal_tuple:
+                answer = self.getActions()
+                self.time = time.time() - start_time
+                print(self.time)
+                return answer
+
+            if cur_cost>self.cost[cur_state]:
+                continue
+            blankX = blank//self.n
+            blankY = blank - blankX * self.n
+            for i in range(4):
+                x = blankX + self.direction[i][0]
+                y = blankY + self.direction[i][1]
+                if not (x >= 0 and x < self.n and y >= 0 and y < self.n):
+                    continue
+                new_state = list(cur_state)
+                new_blank = x*self.n+y
+                new_state[new_blank]=0
+                new_state[blank]=cur_state[new_blank]
+                new_state=tuple(new_state)
+                
+                new_heuristic = cur_heuristic
+
+                if(new_state[blank] == self.goal_tuple[blank]):
+                    new_heuristic-=1
+                elif(new_state[blank] == self.goal_tuple[new_blank]):
+                    new_heuristic+=1
+
+                if self.cost.get(new_state) is not None and self.cost[new_state] <= cur_cost + 1:
+                    continue
+                
+                self.cost[new_state] = cur_cost + 1
+                self.prev[new_state] = i
+                heapq.heappush(frontier, (new_heuristic+cur_cost+1, new_state, new_blank))
+                self.numNodesGen = self.numNodesGen + 1
+                self.maxNumNodesInQ = max(self.maxNumNodesInQ, len(frontier))
+
+        return ["UNSOLVABLE"] # sample output
 
     # you may add more functions if you think is useful
-    def is_solvable(self):
-        return self.get_no_of_inv() % 2 == 0
 
-    def get_no_of_inv(self):
-        lst_inv = []
-        
-        # create the string of interest for comparison
-        for row in range(len(self.init_state)):
-            for col in range(len(self.init_state)):
-                lst_inv.append(self.init_state[row][col])
-                
-        # start counting the inversions
-        count = 0
-        for i in range(len(lst_inv)):
-            for j in range(i + 1, len(lst_inv)):
-                if (lst_inv[j] > 0 and lst_inv[i] > lst_inv[j]):
-                    count += 1
-                    
-        return count
+    def isSolvable(self):
+        numInvert = self.getNumOfInversions()
+        if self.n % 2 == 1:
+            return (numInvert % 2 == 0)
+        else:
+            blank = self.getBlank(self.init_tuple)
+            blankX=blank//self.n
+            blankY=blank%self.n
+            return (blankX % 2)!=(numInvert % 2)
     
+    def getNumOfInversions(self):
+        init_state_tuple = tuple(col for row in self.init_state for col in row)
+        invCount = 0
+        for i in range(len(init_state_tuple)):
+            for j in range(i+1, len(init_state_tuple)):
+                if (init_state_tuple[j] > 0 and init_state_tuple[i] > init_state_tuple[j]): 
+                    invCount += 1
+        return invCount
 
 if __name__ == "__main__":
     # do NOT modify below
@@ -206,19 +211,6 @@ if __name__ == "__main__":
     puzzle = Puzzle(init_state, goal_state)
     ans = puzzle.solve()
 
-    # delete this when we submit
-    if (puzzle.checkActions(ans) is True):
-        print ("Ok")
-    else:
-        print("wrong")
-
     with open(sys.argv[2], 'a') as f:
         for answer in ans:
             f.write(answer+'\n')
-
-
-
-
-
-
-
